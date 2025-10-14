@@ -1,30 +1,26 @@
-(* #load "goto_lookup.cmo" *)
-let id x = x
+open Goto_lookup
 
-let l_to_string fn list =
-  let rec aux acc = function
-    | [] -> acc ^ "]"
-    | a :: [] -> acc ^ fn a ^ "]"
-    | a :: b -> aux (acc ^ fn a ^ "; ") b
-  in
-  aux "[" list
+type flags = ALL | IGNORE_CASE
 
-let los_to_string list = l_to_string id list
+let query = ref { ignore_case = false; needles = [] }
+
+let parse_arg = function
+  | "-i" -> query := { !query with ignore_case = true }
+  | needle -> query := { !query with needles = needle :: !query.needles }
 
 let () =
-  (* let input = String.trim In_channel.(input_all stdin) in *)
-  let needles = ref [] in
   Arg.parse []
-    (fun it -> needles := String.trim it :: !needles)
+    parse_arg
+    (* (fun it -> needles := String.trim it :: !needles) *)
     "usage: goto_lookup <search>";
-  match List.rev !needles with
+  match List.rev !query.needles with
   | [] -> print_endline ""
   | [ needle ] -> (
-      match Goto_lookup.(find needle lines) with
+      match find needle lines with
       | None -> exit 404
       | Some p -> print_endline p)
   | needles -> (
-    (* needles |> los_to_string |> print_endline ; *)
-      match Goto_lookup.(filter needles lines) with
+      (* needles |> los_to_string |> print_endline ; *)
+      match filter needles lines with
       | [] -> exit 404
       | hd :: _ -> print_endline hd)

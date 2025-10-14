@@ -2,6 +2,8 @@ let home = Unix.getenv "HOME"
 let got_to_file = home ^ "/.got_to"
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
 
+type query_type = { ignore_case : bool; needles : string list }
+
 let rec find_with fn = function
   | [] -> None
   | hd :: tl when fn hd -> Some hd
