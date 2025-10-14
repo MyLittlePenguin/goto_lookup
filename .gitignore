@@ -1,0 +1,5 @@
+goto_lookup
+*.cmi
+*.cmo
+*.cmx
+*.o
