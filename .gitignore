@@ -1,5 +1,2 @@
-goto_lookup
-*.cmi
-*.cmo
-*.cmx
-*.o
+bin/
+test/out/
