@@ -1,6 +1,6 @@
 .PHONY: build
 build: build_goto_lookup build_main
-	ocamlopt -I +unix unix.cmxa -I bin goto_lookup.cmx main.cmx -o bin/goto_lookup
+	ocamlopt -I +unix unix.cmxa -I bin goto_lookup.cmx stringify.cmx main.cmx -o bin/goto_lookup
 
 .PHONY: clean_build
 clean_build: clean build
@@ -10,8 +10,12 @@ build_goto_lookup:
 	ocamlopt -I +unix unix.cmxa -o bin/goto_lookup.cmx -c src/goto_lookup.ml
 
 .PHONY: build_main
-build_main:
-	ocamlopt -I +unix unix.cmxa -I bin goto_lookup.cmx -o bin/main.cmx -c src/main.ml
+build_main: build_stringify
+	ocamlopt -I +unix unix.cmxa -I bin goto_lookup.cmx stringify.cmx -o bin/main.cmx -c src/main.ml
+
+.PHONY: build_stringify
+build_stringify:
+	ocamlopt -o bin/stringify.cmx -c src/stringify.ml
 
 .PHONY: test
 test:

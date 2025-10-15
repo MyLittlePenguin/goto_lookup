@@ -68,6 +68,7 @@ let find (needle : string) (list : string list) =
     |> otherwise (find_end needle)
     |> otherwise find_some
 
+
 let substr_after needle line =
   let length = String.length line in
   let needle_length = String.length needle in
@@ -81,7 +82,9 @@ let substr_after needle line =
   in
   aux length line
 
-let filter needles list =
+let filter query list =
+  let prep str = if query.ignore_case then String.lowercase_ascii str else str in
+  let needles = List.map prep query.needles in
   let rec search_needles line = function
     | [] -> true
     (* | [ "" ] when line <> "" -> false *)
@@ -91,5 +94,5 @@ let filter needles list =
         | "" -> false
         | remainder -> search_needles remainder other_needles)
   in
-  let has_needles line = search_needles line needles in
+  let has_needles line = search_needles (prep line) needles in
   List.filter has_needles list
