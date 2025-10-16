@@ -1,0 +1,5 @@
+(executable
+  (public_name goto_lookup)
+  (name main)
+  (libraries goto_lookup)
+  )

@@ -6,7 +6,7 @@ type query_type = { ignore_case : bool; needles : string list }
 
 let rec find_with fn = function
   | [] -> None
-  | hd :: tl when fn hd -> Some hd
+  | hd :: _ when fn hd -> Some hd
   | _ :: tl -> find_with fn tl
 
 let find_perfect needle list = find_with (fun it -> it = needle) list
@@ -49,7 +49,7 @@ let find_dir needle =
     ( Sys.file_exists abs_needle && Sys.is_directory abs_needle,
       List.find_index (fun it -> it = abs_needle) lines )
   with
-  | true, Some x ->
+  | true, Some _ ->
       write lines;
       Some abs_needle
   | true, None ->
