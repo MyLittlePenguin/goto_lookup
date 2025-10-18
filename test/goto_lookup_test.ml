@@ -47,4 +47,15 @@ let () =
       (filter
          { ignore_case = false; needles = [] }
          [ ""; "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
-      [ ""; "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
+      [ ""; "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ];
+    test
+      (filter
+         { ignore_case = false; needles = [ "software" ] }
+         [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
+      [];
+    test
+      (filter
+         { ignore_case = true; needles = [ "software" ] }
+         [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
+      [ "Software/ocaml" ];
+    )
