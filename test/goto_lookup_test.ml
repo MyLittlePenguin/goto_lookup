@@ -13,29 +13,38 @@ let assert_equals (fn : 'a -> string) a b =
 
 let () =
   Goto_lookup.(
-    assert_equals id (substr_after "c" "ocaml") "aml";
-    assert_equals id (substr_after "ca" "ocaml") "ml";
-    assert_equals id (substr_after "z" "ocaml") "";
-    assert_equals los_to_string
-      (filter [ "oc" ]
+    let test = assert_equals id in
+    test (substr_after "c" "ocaml") "aml";
+    test (substr_after "ca" "ocaml") "ml";
+    test (substr_after "z" "ocaml") "";
+    let test = assert_equals los_to_string in
+    test
+      (filter
+         { ignore_case = false; needles = [ "oc" ] }
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "workspace/ocaml/bingo"; "Software/ocaml" ];
-    assert_equals los_to_string
-      (filter [ "ocaml" ]
+    test
+      (filter
+         { ignore_case = false; needles = [ "ocaml" ] }
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "workspace/ocaml/bingo"; "Software/ocaml" ];
-    assert_equals los_to_string
-      (filter [ "oc"; "bi" ]
+    test
+      (filter
+         { ignore_case = false; needles = [ "oc"; "bi" ] }
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "workspace/ocaml/bingo" ];
-    assert_equals los_to_string
-      (filter [ "oc"; "bu" ]
+    test
+      (filter
+         { ignore_case = false; needles = [ "oc"; "bu" ] }
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [];
-    assert_equals los_to_string
-      (filter [] [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
+    test
+      (filter
+         { ignore_case = false; needles = [] }
+         [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ];
-    assert_equals los_to_string
-      (filter []
+    test
+      (filter
+         { ignore_case = false; needles = [] }
          [ ""; "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ ""; "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
