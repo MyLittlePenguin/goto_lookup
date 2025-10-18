@@ -40,6 +40,11 @@ let find_dir needle =
     | x -> x
   in
   let abs_needle = to_abs needle in
+  let abs_needle =
+    if String.ends_with ~suffix:"/" abs_needle then
+      String.sub abs_needle 0 (String.length abs_needle - 1)
+    else abs_needle
+  in
   let write it =
     List.sort String.compare it
     |> String.concat "\n"
@@ -68,7 +73,6 @@ let find (needle : string) (list : string list) =
     |> otherwise (find_end needle)
     |> otherwise find_some
 
-
 let substr_after needle line =
   let length = String.length line in
   let needle_length = String.length needle in
@@ -83,7 +87,9 @@ let substr_after needle line =
   aux length line
 
 let filter query list =
-  let prep str = if query.ignore_case then String.lowercase_ascii str else str in
+  let prep str =
+    if query.ignore_case then String.lowercase_ascii str else str
+  in
   let needles = List.map prep query.needles in
   let rec search_needles line = function
     | [] -> true
