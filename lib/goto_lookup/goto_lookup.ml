@@ -2,15 +2,21 @@ let home = Unix.getenv "HOME"
 let got_to_file = home ^ "/.got_to"
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
 
-type query_type = { ignore_case : bool; needles : string list }
+type multi_needle_query = { ignore_case : bool; needles : string list }
+type single_needle_query = { ignore_case : bool; needle : string }
 
 let rec find_with fn = function
   | [] -> None
   | hd :: _ when fn hd -> Some hd
   | _ :: tl -> find_with fn tl
 
-let find_perfect needle list = find_with (fun it -> it = needle) list
-let find_end needle list = find_with (String.ends_with ~suffix:needle) list
+let find_perfect prepare needle list =
+  let prepared_needle = prepare needle in
+  find_with (fun it -> prepare it = prepared_needle) list
+
+let find_end prepare needle list =
+  let prepared_needle = prepare needle in
+  find_with (fun it -> String.ends_with ~suffix:prepared_needle (prepare it)) list
 
 let rec contains needle line =
   match line with
@@ -62,15 +68,22 @@ let find_dir needle =
       Some abs_needle
   | false, _ -> None
 
-let find (needle : string) (list : string list) =
+let find (query : single_needle_query) (list : string list) =
+  let prepare str =
+    if query.ignore_case then String.lowercase_ascii str else str
+  in
   let otherwise fn = function None -> fn list | Some v -> Some v in
-  let contains = contains needle in
+  let contains list =
+    match query with
+    | { needle; ignore_case = false } -> contains needle list
+    | { needle; ignore_case = true } -> contains (prepare needle) (prepare list)
+  in
   let find_some list = find_with contains list in
-  if needle = "" then exit 400
+  if query.needle = "" then exit 400
   else
-    find_dir needle
-    |> otherwise (find_perfect needle)
-    |> otherwise (find_end needle)
+    find_dir query.needle
+    |> otherwise (find_perfect prepare query.needle)
+    |> otherwise (find_end prepare query.needle)
     |> otherwise find_some
 
 let substr_after needle line =
@@ -86,7 +99,7 @@ let substr_after needle line =
   in
   aux length line
 
-let filter query list =
+let filter (query: multi_needle_query) list =
   let prep str =
     if query.ignore_case then String.lowercase_ascii str else str
   in

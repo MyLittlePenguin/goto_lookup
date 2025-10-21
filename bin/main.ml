@@ -13,7 +13,7 @@ let () =
   match List.rev !needles with
   | [] -> print_endline ""
   | [ needle ] -> (
-      match find needle lines with
+      match find { ignore_case = !ignore_case; needle } lines with
       | None -> exit 404
       | Some p -> print_endline p)
   | needles -> (
