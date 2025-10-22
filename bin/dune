@@ -3,3 +3,10 @@
   (name main)
   (libraries goto_lookup)
   )
+
+(rule
+ (target version.ml)
+ (action
+  (write-file %{target} "let number = \"0.1.0\"")
+ )
+)

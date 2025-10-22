@@ -10,5 +10,5 @@
 - [ ] add flag to list all matches
 - [ ] add flag to list known locations
 - [ ] add flag to remove matches from known locations
-- [ ] add flag to print version
+- [x] add flag to print version
 - [ ] add env variable to change the path of the known location file
