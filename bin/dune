@@ -1,12 +1,12 @@
 (executable
   (public_name goto_lookup)
   (name main)
-  (libraries goto_lookup)
+  (libraries goto_lookup errors)
   )
 
 (rule
  (target version.ml)
  (action
-  (write-file %{target} "let number = \"0.1.0\"")
+  (write-file %{target} "let number = \"0.2.0\"")
  )
 )
