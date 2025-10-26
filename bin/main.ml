@@ -5,22 +5,23 @@ type action_type = Print_Version | Lookup | List
 let ignore_case = ref false
 let needles = ref []
 let action = ref Lookup
+let set_action a = (fun () -> action := a)
 
 let speclist =
   [
     ("-i", Arg.Set ignore_case, "Ignore case of needles and known entries");
-    ( "-l",
-      Arg.Unit (fun () -> action := List),
-      "Lists all matches after applying filter. If no filter was applied all \
-       the known locations are listed." );
-    ("-v", Arg.Unit (fun () -> action := Print_Version), "Print version number");
-    ( "--version",
-      Arg.Unit (fun () -> action := Print_Version),
-      "print version number" );
+    ( "-I",
+      Arg.Unit (fun () -> ignore_case := false),
+      "Don't ignore case of needles and known entries" );
     ( "--list",
-      Arg.Unit (fun () -> action := List),
+      Arg.Unit (set_action List),
       "Lists all matches after applying filter. If no filter was applied all \
        the known locations are listed." );
+    ("-l", Arg.Unit (set_action List), "Same as --list.");
+    ( "--version",
+      Arg.Unit (set_action Print_Version),
+      "Print version number" );
+    ("-v", Arg.Unit (set_action Print_Version), "Same as --version.");
   ]
 
 let parse_arg needle = needles := needle :: !needles
