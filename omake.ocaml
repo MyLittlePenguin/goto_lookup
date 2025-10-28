@@ -1,0 +1,12 @@
+#require "unix"
+
+let arg = if Array.length Sys.argv > 1 then Sys.argv.(1) else ""
+
+let cmd command =
+  match Unix.system command with
+  | WEXITED 0 -> ()
+  | WEXITED code -> exit code
+  | _ -> exit 420
+
+let echo msg =
+  cmd @@ "echo " ^ msg

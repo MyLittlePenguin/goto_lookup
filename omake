@@ -1,0 +1,14 @@
+#!/usr/bin/env utop
+#use "omake.ocaml"
+
+let rec run = function
+  | "" | "build" | "compile" ->
+      cmd "dune build";
+  | "install" -> 
+    run "build";
+    cmd "dune install";
+  | "test" ->
+    cmd "dune test";
+  | _ -> exit 404;;
+
+let () = run arg |> ignore
