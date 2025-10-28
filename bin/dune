@@ -1,7 +1,7 @@
 (executable
   (public_name goto_lookup)
   (name main)
-  (libraries goto_lookup errors)
+  (libraries goto_lookup errors stringify)
   )
 
 (rule

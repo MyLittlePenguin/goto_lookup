@@ -30,6 +30,7 @@ let lookup_filter () =
   filter { ignore_case = !ignore_case; needles = !needles } lines
 
 let lookup () =
+  (* !needles |> Stringify.los_to_string |> print_endline; *)
   match !needles with
   | [] -> [ "" ]
   | [ needle ] -> (
