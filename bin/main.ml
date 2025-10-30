@@ -38,7 +38,6 @@ let lookup () =
       match find { ignore_case = !ignore_case; needle } lines with
       | None -> []
       | Some p -> [ p ])
-  (* | needles -> filter { ignore_case = !ignore_case; needles } lines *)
   | _ -> lookup_filter ()
 
 let lookup_handler handler results =

@@ -7,6 +7,6 @@
 (rule
  (target version.ml)
  (action
-  (write-file %{target} "let number = \"0.2.0\"")
+  (write-file %{target} "let number = \"0.2.1\"")
  )
 )
