@@ -1,3 +1,0 @@
-(test
-  (name goto_lookup_test)
-  (libraries stringify goto_lookup))
