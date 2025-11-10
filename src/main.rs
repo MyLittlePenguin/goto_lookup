@@ -17,18 +17,40 @@ fn string(s: &str) -> String {
     s.to_string()
 }
 
+type ParsedArgState<'a> = (ActionType, bool, &'a mut Vec<String>);
+type ArgSpec<'a, 'b> = (&'a str, &'b str, fn(ParsedArgState) -> ParsedArgState);
+
+const SPECS: [ArgSpec; 6] = [
+    ("-i", "--ignore-case", |state| {
+        (state.0, true, state.2)
+    }),
+    ("-I", "", |state| (state.0, false, state.2)),
+    ("-l", "--list", |state| {
+        (ActionType::List, state.1, state.2)
+    }),
+    ("-v", "--version", |state| {
+        (ActionType::PrintVersion, state.1, state.2)
+    }),
+    ("-h", "--help", |state| {
+        (ActionType::PrintHelp, state.1, state.2)
+    }),
+    ("--clean", "", |state| {
+        (ActionType::Clean, state.1, state.2)
+    }),
+];
+
 fn parse_args(args: Vec<String>) -> (ActionType, Query) {
-    let state: (ActionType, bool, &mut Vec<String>) = (ActionType::Lookup, false, &mut vec![]);
-    let state = args.iter().fold(state, |acc, it| match it.as_str() {
-        "-i" | "--ignore-case" => (acc.0, true, acc.2),
-        "-I" => (acc.0, false, acc.2),
-        "-l" | "--list" => (ActionType::List, acc.1, acc.2),
-        "-v" | "--version" => (ActionType::PrintVersion, acc.1, acc.2),
-        "-h" | "--help" => (ActionType::PrintHelp, acc.1, acc.2),
-        "--clean" => (ActionType::Clean, acc.1, acc.2),
-        str => {
-            acc.2.push(str.to_string());
-            acc
+    let state: ParsedArgState = (ActionType::Lookup, false, &mut vec![]);
+    let state = args.iter().fold(state, |acc, it| -> ParsedArgState {
+        match SPECS.iter().find(|spec| {
+            (!spec.0.is_empty() && spec.0 == it)
+                || (!spec.1.is_empty() && spec.1 == it)
+        }) {
+            Some(x) => x.2(acc),
+            None => {
+                acc.2.push(it.to_string());
+                acc
+            }
         }
     });
     match &state.2[..] {
@@ -41,7 +63,7 @@ fn parse_args(args: Vec<String>) -> (ActionType, Query) {
 fn main() {
     println!("Hello, world!");
     let args: Vec<String> = env::args().collect();
-    let (action, query) = parse_args(args);
+    let (action, _) = parse_args(args);
     match action {
         ActionType::PrintVersion => println!("goto_lookup 0.0.1"),
         ActionType::PrintHelp => todo!(),

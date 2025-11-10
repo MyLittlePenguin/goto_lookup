@@ -9,7 +9,7 @@
 - [x] remove or add slashes at the end consequently when adding an entry
 - [x] add flag to list all matches
 - [x] add flag to list known locations
-- [ ] add flag to remove match from known locations
+- [ ] add flag to remove matches from known locations
 - [x] add flag to remove all paths that don't exist anymore
 - [x] add flag to print version
 - [ ] add env variable to change the path of the known location file
