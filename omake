@@ -1,44 +1,29 @@
 #!/usr/bin/env utop
-#use "omake.ocaml"
+#require "unix"
 
-let version_file = "version.txt"
+let arg = if Array.length Sys.argv > 1 then Sys.argv.(1) else ""
 
-let rec run = function
-  | "" | "build" | "compile" ->
-    run "update_version";
-    cmd "dune build"
-  | "release" ->
-    run "create_version";
-    cmd "dune build --profile=release"
-  | "run" ->
-    run "create_version";
-    cmd "dune exec ./bin/main.exe"
-  | "version" ->
-    cmd "cat version.txt"
-  | "install" ->
-    run "release";
-    cmd "dune install"
-  | "test" ->
-    cmd "dune test"
+let cmd command =
+  match Unix.system command with
+  | WEXITED 0 -> ()
+  | WEXITED code -> exit code
+  | _ -> exit 420
 
-  | "create_version" ->
-    write "bin/version.ml" @@ String.concat "" [
-      "let number = \"";
-      String.trim @@ read version_file;
-      "\"\n"
-    ]
+let echo msg =
+  cmd @@ "echo " ^ msg
 
-  | "update_version" ->
-    let version = String.trim @@ read version_file in
-    let parts = String.split_on_char '.' version in
-    let new_version = String.concat "." [
-      List.nth parts 0;
-      List.nth parts 1;
-      List.nth parts 2 |> int_of_string |> (+) 1 |> string_of_int;
-    ] in
-    write version_file new_version;
-    run "create_version";
+let write filename content =
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc
 
-  | _ -> exit 404;;
+let read filename =
+  let ic = open_in filename in
+  let n = in_channel_length ic in
+  let content = really_input_string ic n in
+  close_in ic;
+  content;;
+
+#use "build.ocaml"
 
 let () = run arg |> ignore
