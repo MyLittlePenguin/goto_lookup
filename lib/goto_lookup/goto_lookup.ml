@@ -1,4 +1,4 @@
-let home = Unix.getenv "HOME"
+let home = Sys.getenv "HOME"
 let got_to_file = home ^ "/.got_to"
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
 
