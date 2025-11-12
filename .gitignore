@@ -1,6 +1,7 @@
 _build/
 goto_lookup.install
 goto_lookup.opam
+bin/
 
 
 # Added by cargo

@@ -1,14 +1,29 @@
 #!/usr/bin/env utop
-#use "omake.ocaml"
+#require "unix"
 
-let rec run = function
-  | "" | "build" | "compile" ->
-      cmd "dune build";
-  | "install" -> 
-    run "build";
-    cmd "dune install";
-  | "test" ->
-    cmd "dune test";
-  | _ -> exit 404;;
+let arg = if Array.length Sys.argv > 1 then Sys.argv.(1) else ""
+
+let cmd command =
+  match Unix.system command with
+  | WEXITED 0 -> ()
+  | WEXITED code -> exit code
+  | _ -> exit 420
+
+let echo msg =
+  cmd @@ "echo " ^ msg
+
+let write filename content =
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc
+
+let read filename =
+  let ic = open_in filename in
+  let n = in_channel_length ic in
+  let content = really_input_string ic n in
+  close_in ic;
+  content;;
+
+#use "build.ocaml"
 
 let () = run arg |> ignore

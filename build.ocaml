@@ -1,0 +1,12 @@
+#!/usr/bin/env utop
+
+let rec run = function
+  | "" | "run" ->
+      cmd "cargo run";
+  | "build" | "compile" ->
+      cmd "cargo build";
+  | "install" -> 
+    cmd "cargo install";
+  | "test" ->
+    cmd "cargo test";
+  | _ -> exit 404;;

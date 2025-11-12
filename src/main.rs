@@ -18,33 +18,57 @@ fn string(s: &str) -> String {
 }
 
 type ParsedArgState<'a> = (ActionType, bool, &'a mut Vec<String>);
-type ArgSpec<'a, 'b> = (&'a str, &'b str, fn(ParsedArgState) -> ParsedArgState);
+type ArgSpec<'a, 'b, 'c> = (
+    &'a str,
+    &'b str,
+    fn(ParsedArgState) -> ParsedArgState,
+    &'c str,
+);
 
 const SPECS: [ArgSpec; 6] = [
-    ("-i", "--ignore-case", |state| {
-        (state.0, true, state.2)
-    }),
-    ("-I", "", |state| (state.0, false, state.2)),
-    ("-l", "--list", |state| {
-        (ActionType::List, state.1, state.2)
-    }),
-    ("-v", "--version", |state| {
-        (ActionType::PrintVersion, state.1, state.2)
-    }),
-    ("-h", "--help", |state| {
-        (ActionType::PrintHelp, state.1, state.2)
-    }),
-    ("--clean", "", |state| {
-        (ActionType::Clean, state.1, state.2)
-    }),
+    (
+        "-i",
+        "--ignore-case",
+        |state| (state.0, true, state.2),
+        "ignore case for finding the matches in the known locations",
+    ),
+    (
+        "-I",
+        "--no-ignore-case",
+        |state| (state.0, false, state.2),
+        "do not ignore case for finding the matches in the known locations",
+    ),
+    (
+        "-l",
+        "--list",
+        |state| (ActionType::List, state.1, state.2),
+        "list all matching locations",
+    ),
+    (
+        "-v",
+        "--version",
+        |state| (ActionType::PrintVersion, state.1, state.2),
+        "print version information",
+    ),
+    (
+        "-h",
+        "--help",
+        |state| (ActionType::PrintHelp, state.1, state.2),
+        "print help information",
+    ),
+    (
+        "",
+        "--clean",
+        |state| (ActionType::Clean, state.1, state.2),
+        "remove orphaned entries from the list of known locations",
+    ),
 ];
 
 fn parse_args(args: Vec<String>) -> (ActionType, Query) {
     let state: ParsedArgState = (ActionType::Lookup, false, &mut vec![]);
     let state = args.iter().fold(state, |acc, it| -> ParsedArgState {
         match SPECS.iter().find(|spec| {
-            (!spec.0.is_empty() && spec.0 == it)
-                || (!spec.1.is_empty() && spec.1 == it)
+            (!spec.0.is_empty() && spec.0 == it) || (!spec.1.is_empty() && spec.1 == it)
         }) {
             Some(x) => x.2(acc),
             None => {
