@@ -2,9 +2,11 @@
 
 let rec run = function
   | "" | "run" ->
-      cmd "cargo run";
+    cmd "cargo run";
+  | "help" ->
+    cmd "cargo run -- --help";
   | "build" | "compile" ->
-      cmd "cargo build";
+    cmd "cargo build";
   | "install" -> 
     cmd "cargo install";
   | "test" ->

@@ -84,13 +84,26 @@ fn parse_args(args: Vec<String>) -> (ActionType, Query) {
     }
 }
 
+fn print_help() {
+    println!("Usage: goto_lookup [options] [query]");
+    println!();
+    println!("Options:");
+    for spec in SPECS.iter() {
+        if spec.0.is_empty() {
+            println!("        {:<20}{}", spec.1, spec.3);
+        } else {
+            println!("    {}, {:<20}{}", spec.0, spec.1, spec.3);
+        }
+    }
+}
+
 fn main() {
     println!("Hello, world!");
     let args: Vec<String> = env::args().collect();
     let (action, _) = parse_args(args);
     match action {
         ActionType::PrintVersion => println!("goto_lookup 0.0.1"),
-        ActionType::PrintHelp => todo!(),
+        ActionType::PrintHelp => print_help(),
         ActionType::Lookup => todo!(),
         ActionType::List => todo!(),
         ActionType::Clean => todo!(),
