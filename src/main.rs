@@ -98,7 +98,6 @@ fn print_help() {
 }
 
 fn main() {
-    println!("Hello, world!");
     let args: Vec<String> = env::args().collect();
     let (action, _) = parse_args(args);
     match action {

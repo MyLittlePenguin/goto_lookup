@@ -7,7 +7,9 @@ let rec run = function
     cmd "cargo run -- --help";
   | "build" | "compile" ->
     cmd "cargo build";
-  | "install" -> 
+  | "release" ->
+    cmd "cargo build --release";
+  | "install" ->
     cmd "cargo install";
   | "test" ->
     cmd "cargo test";
