@@ -21,8 +21,8 @@ let rec run = function
     cmd "cat version.txt"
 
   | "install" ->
-    echo "install";
     run "release";
+    echo "install";
     cmd "dune install"
 
   | "test" ->
