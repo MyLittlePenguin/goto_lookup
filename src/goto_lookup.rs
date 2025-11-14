@@ -12,9 +12,9 @@ pub enum Query {
 
 static GOT_TO_FILE: &str = "/.got_to";
 
-pub fn home() -> &str {
+pub fn home() -> String {
     match env::home_dir() {
-        Some(path) => path.to_str().unwrap(),
+        Some(path) => path.to_str().unwrap().to_string(),
         None => panic!("home directory not found!"),
     }
 }
