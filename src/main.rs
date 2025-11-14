@@ -1,16 +1,16 @@
 use std::env;
 
+
+use crate::goto_lookup::Query;
+
+pub mod goto_lookup;
+
 enum ActionType {
     PrintVersion,
     PrintHelp,
     Lookup,
     List,
     Clean,
-}
-
-enum Query {
-    Single(bool, String),
-    Multi(bool, Vec<String>),
 }
 
 fn string(s: &str) -> String {
