@@ -1,7 +1,7 @@
 use std::env;
 
 
-use crate::goto_lookup::Query;
+use crate::goto_lookup::{Query, find, filter};
 
 pub mod goto_lookup;
 
@@ -78,9 +78,9 @@ fn parse_args(args: Vec<String>) -> (ActionType, Query) {
         }
     });
     match &state.2[..] {
-        [] => (state.0, Query::Single(state.1, string(""))),
-        [a] => (state.0, Query::Single(state.1, a.to_string())),
-        _ => (state.0, Query::Multi(state.1, state.2.clone())),
+        [] => (state.0, Query::Single{ignore_case: state.1, needle: string("")}),
+        [a] => (state.0, Query::Single{ignore_case: state.1, needle: a.to_string()}),
+        _ => (state.0, Query::Multi{ignore_case: state.1, needles: state.2.clone()}),
     }
 }
 
@@ -99,12 +99,12 @@ fn print_help() {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let (action, _) = parse_args(args);
+    let (action, query) = parse_args(args);
     match action {
         ActionType::PrintVersion => println!("goto_lookup 0.0.1"),
         ActionType::PrintHelp => print_help(),
         ActionType::Lookup => todo!(),
-        ActionType::List => todo!(),
+        ActionType::List => filter(query).iter().for_each(|it| println!("{}", it)),
         ActionType::Clean => todo!(),
     }
 }
