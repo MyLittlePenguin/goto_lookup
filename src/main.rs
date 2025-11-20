@@ -1,7 +1,7 @@
 use std::env;
 
-
-use crate::goto_lookup::{Query, find, filter};
+use crate::goto_lookup::{Query, filter, find};
+use std::process;
 
 pub mod goto_lookup;
 
@@ -78,9 +78,27 @@ fn parse_args(args: Vec<String>) -> (ActionType, Query) {
         }
     });
     match &state.2[..] {
-        [] => (state.0, Query::Single{ignore_case: state.1, needle: string("")}),
-        [a] => (state.0, Query::Single{ignore_case: state.1, needle: a.to_string()}),
-        _ => (state.0, Query::Multi{ignore_case: state.1, needles: state.2.clone()}),
+        [] => (
+            state.0,
+            Query::Single {
+                ignore_case: state.1,
+                needle: string(""),
+            },
+        ),
+        [a] => (
+            state.0,
+            Query::Single {
+                ignore_case: state.1,
+                needle: a.to_string(),
+            },
+        ),
+        _ => (
+            state.0,
+            Query::Multi {
+                ignore_case: state.1,
+                needles: state.2.clone(),
+            },
+        ),
     }
 }
 
@@ -104,7 +122,12 @@ fn main() {
     match action {
         ActionType::PrintVersion => println!("goto_lookup 0.0.1"),
         ActionType::PrintHelp => print_help(),
-        ActionType::Lookup => todo!(),
+        ActionType::Lookup => {
+            match &find(query, lines)[..] {
+                [] => process::exit(404),
+                [line, ..] => println!("{}", line),
+            }
+        }
         ActionType::List => filter(query, lines).iter().for_each(|it| println!("{}", it)),
         ActionType::Clean => todo!(),
     }

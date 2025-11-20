@@ -12,6 +12,8 @@ pub enum Query {
     },
 }
 
+type Preparator = fn(String) -> String;
+
 static GOT_TO_FILE: &str = "/.got_to";
 
 pub fn home() -> String {
@@ -24,7 +26,7 @@ pub fn home() -> String {
 pub fn lines() -> Vec<String> {
     return match fs::read_to_string(home() + GOT_TO_FILE) {
         Ok(content) => Vec::from_iter(content.split("\n").into_iter().map(|it| it.to_string())),
-        Err(error) => vec![],
+        Err(_) => vec![],
     };
 }
 
@@ -36,21 +38,22 @@ fn find_with(f: impl Fn(String) -> bool, list: &[String]) -> Option<String> {
     }
 }
 
-fn find_perfect(
-    prepare: impl Fn(String) -> String,
-    needle: String,
-    list: &[String],
-) -> Option<String> {
+fn find_perfect(prepare: Preparator, needle: String, list: &[String]) -> Option<String> {
     let prepared_needle = prepare(needle);
     find_with(|it| prepare(it) == prepared_needle, list)
 }
 
-fn find_end(prepare: impl Fn(String) -> String, needle: String, list: &[String]) -> Option<String> {
+fn find_end(prepare: Preparator, needle: String, list: &[String]) -> Option<String> {
     let prepared_needle = prepare(needle);
-    find_with(|it| it.ends_with(&prepared_needle), list)
+    find_with(|it| prepare(it).ends_with(&prepared_needle), list)
 }
 
-pub fn find(query: Query, lines: &[String]) -> Option<String> {
+fn find_some(prepare: Preparator, needle: String, list: &[String]) -> Option<String> {
+    let prepared_needle = prepare(needle);
+    find_with(|it| prepare(it).contains(&prepared_needle), list)
+}
+
+pub fn find(query: Query, lines: &[String]) -> Vec<String> {
     match query {
         Query::Single {
             ignore_case,
@@ -62,25 +65,25 @@ pub fn find(query: Query, lines: &[String]) -> Option<String> {
             };
             find_perfect(prepare, needle.clone(), lines)
                 .or_else(|| find_end(prepare, needle.clone(), lines))
+                .or_else(|| find_some(prepare, needle.clone(), lines))
+                .map_or(vec![], |value| vec![value])
         }
         Query::Multi {
             ignore_case,
             needles,
-        } => {
-            find(
-                Query::Single {
+        } => find(
+            Query::Single {
+                ignore_case,
+                needle: needles[needles.len() - 1].clone(),
+            },
+            &filter(
+                Query::Multi {
                     ignore_case,
-                    needle: needles[needles.len() - 1].clone(),
+                    needles,
                 },
-                &filter(
-                    Query::Multi {
-                        ignore_case,
-                        needles,
-                    },
-                    lines,
-                )[..],
-            )
-        }
+                lines,
+            )[..],
+        ),
     }
 }
 
@@ -91,18 +94,29 @@ pub fn filter(query: Query, lines: &[String]) -> Vec<String> {
             needle,
         } => {
             let needle = needle.to_lowercase();
-            lines.iter().filter(|it| {
-                if ignore_case {
-                    it.to_lowercase().contains(&needle)
-                } else {
-                    it.contains(&needle)
-                }
-            }).cloned().collect()
-        },
+            lines
+                .iter()
+                .filter(|it| {
+                    if ignore_case {
+                        it.to_lowercase().contains(&needle)
+                    } else {
+                        it.contains(&needle)
+                    }
+                })
+                .cloned()
+                .collect()
+        }
         Query::Multi {
             ignore_case,
             needles,
-        } => todo!(),
+        } => {
+            let prepare = match ignore_case {
+                true => |it: String| it.to_lowercase(),
+                false => |it: String| it,
+            };
+            // something with left fold
+            todo!()
+        }
     }
 }
 
@@ -148,7 +162,24 @@ mod test {
         assert_eq!(
             find_end(
                 |it| it.to_string(),
-                "welt".to_string(),
+                "lo".to_string(),
+                &[
+                    "tralala".to_string(),
+                    "hallo welt".to_string(),
+                    "hallo".to_string(),
+                    "uwu".to_string()
+                ]
+            ),
+            Some("hallo".to_string())
+        );
+    }
+
+    #[test]
+    fn test_find_some() {
+        assert_eq!(
+            find_some(
+                |it| it.to_string(),
+                "lo".to_string(),
                 &[
                     "tralala".to_string(),
                     "hallo welt".to_string(),
