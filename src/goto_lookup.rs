@@ -50,7 +50,7 @@ fn find_end(prepare: impl Fn(String) -> String, needle: String, list: &[String])
     find_with(|it| it.ends_with(&prepared_needle), list)
 }
 
-pub fn find(query: Query) -> Option<String> {
+pub fn find(query: Query, lines: &[String]) -> Option<String> {
     match query {
         Query::Single {
             ignore_case,
@@ -60,20 +60,45 @@ pub fn find(query: Query) -> Option<String> {
                 true => |it: String| it.to_lowercase(),
                 false => |it: String| it,
             };
-            let lines = &lines()[..];
             find_perfect(prepare, needle.clone(), lines)
                 .or_else(|| find_end(prepare, needle.clone(), lines))
         }
-        _ => todo!(),
+        Query::Multi {
+            ignore_case,
+            needles,
+        } => {
+            find(
+                Query::Single {
+                    ignore_case,
+                    needle: needles[needles.len() - 1].clone(),
+                },
+                &filter(
+                    Query::Multi {
+                        ignore_case,
+                        needles,
+                    },
+                    lines,
+                )[..],
+            )
+        }
     }
 }
 
-pub fn filter(query: Query) -> Vec<String> {
+pub fn filter(query: Query, lines: &[String]) -> Vec<String> {
     match query {
         Query::Single {
             ignore_case,
             needle,
-        } => vec![],
+        } => {
+            let needle = needle.to_lowercase();
+            lines.iter().filter(|it| {
+                if ignore_case {
+                    it.to_lowercase().contains(&needle)
+                } else {
+                    it.contains(&needle)
+                }
+            }).cloned().collect()
+        },
         Query::Multi {
             ignore_case,
             needles,

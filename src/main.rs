@@ -100,11 +100,12 @@ fn print_help() {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let (action, query) = parse_args(args);
+    let lines = &goto_lookup::lines()[..];
     match action {
         ActionType::PrintVersion => println!("goto_lookup 0.0.1"),
         ActionType::PrintHelp => print_help(),
         ActionType::Lookup => todo!(),
-        ActionType::List => filter(query).iter().for_each(|it| println!("{}", it)),
+        ActionType::List => filter(query, lines).iter().for_each(|it| println!("{}", it)),
         ActionType::Clean => todo!(),
     }
 }
