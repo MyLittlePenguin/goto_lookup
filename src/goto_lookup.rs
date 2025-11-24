@@ -26,7 +26,10 @@ pub fn home() -> String {
 pub fn lines() -> Vec<String> {
     return match fs::read_to_string(home() + GOT_TO_FILE) {
         Ok(content) => Vec::from_iter(content.split("\n").into_iter().map(|it| it.to_string())),
-        Err(_) => vec![],
+        Err(e) => {
+            println!("Could not read {}: {}", GOT_TO_FILE, e);
+            vec![]
+        }
     };
 }
 
@@ -93,12 +96,14 @@ pub fn filter(query: Query, lines: &[String]) -> Vec<String> {
             ignore_case,
             needle,
         } => {
-            let needle = needle.to_lowercase();
+            if needle.len() == 0 {
+                return lines.to_vec();
+            }
             lines
                 .iter()
                 .filter(|it| {
                     if ignore_case {
-                        it.to_lowercase().contains(&needle)
+                        it.to_lowercase().contains(&needle.to_lowercase())
                     } else {
                         it.contains(&needle)
                     }
@@ -114,8 +119,23 @@ pub fn filter(query: Query, lines: &[String]) -> Vec<String> {
                 true => |it: String| it.to_lowercase(),
                 false => |it: String| it,
             };
-            // something with left fold
-            todo!()
+
+            let apply_needle = |acc: Option<String>, needle: &String| -> Option<String> {
+                acc.and_then(|acc| {
+                    let prep_needle = prepare(needle.to_string());
+                    acc.find(&prep_needle)
+                        .and_then(|idx| Some(acc[idx + prep_needle.len()..].to_string()))
+                })
+            };
+
+            let check_needles = |line: &&String| -> bool {
+                needles
+                    .iter()
+                    .fold(Some(prepare(line.to_string())), apply_needle)
+                    .is_some()
+            };
+
+            lines.iter().filter(check_needles).cloned().collect()
         }
     }
 }
@@ -188,6 +208,44 @@ mod test {
                 ]
             ),
             Some("hallo welt".to_string())
+        );
+    }
+
+    #[test]
+    fn test_filter_single() {
+        assert_eq!(
+            filter(
+                Query::Single {
+                    ignore_case: false,
+                    needle: "lo".to_string()
+                },
+                &[
+                    "tralala".to_string(),
+                    "hallo welt".to_string(),
+                    "hallo".to_string(),
+                    "uwu".to_string()
+                ]
+            ),
+            vec!["hallo welt".to_string(), "hallo".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_filter_single_ignore_case() {
+        assert_eq!(
+            filter(
+                Query::Single {
+                    ignore_case: true,
+                    needle: "Lo".to_string()
+                },
+                &[
+                    "tralala".to_string(),
+                    "hallO welt".to_string(),
+                    "hallo".to_string(),
+                    "uwu".to_string()
+                ]
+            ),
+            vec!["hallO welt".to_string(), "hallo".to_string()]
         );
     }
 }

@@ -66,7 +66,7 @@ const SPECS: [ArgSpec; 6] = [
 
 fn parse_args(args: Vec<String>) -> (ActionType, Query) {
     let state: ParsedArgState = (ActionType::Lookup, false, &mut vec![]);
-    let state = args.iter().fold(state, |acc, it| -> ParsedArgState {
+    let state = args[1..].iter().fold(state, |acc, it| -> ParsedArgState {
         match SPECS.iter().find(|spec| {
             (!spec.0.is_empty() && spec.0 == it) || (!spec.1.is_empty() && spec.1 == it)
         }) {
