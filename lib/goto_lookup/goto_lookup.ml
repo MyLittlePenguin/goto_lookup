@@ -2,6 +2,10 @@ let home = Sys.getenv "HOME"
 let got_to_file = home ^ "/.got_to"
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
 
+type query = 
+  | Single of { ignore_case: bool; needle: string }
+  | Multi of { ignore_case: bool; needles: string list }
+
 type multi_needle_query = { ignore_case : bool; needles : string list }
 type single_needle_query = { ignore_case : bool; needle : string }
 
