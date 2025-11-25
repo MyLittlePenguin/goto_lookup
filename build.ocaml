@@ -8,4 +8,5 @@ let rec run = function
   | "release" -> cmd "cargo build --release";
   | "install" -> cmd "cargo install";
   | "test" -> cmd "cargo test";
+  | "pull" -> cmd "git pull";
   | _ -> exit 404;;
