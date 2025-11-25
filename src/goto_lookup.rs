@@ -120,17 +120,17 @@ pub fn filter(query: Query, lines: &[String]) -> Vec<String> {
                 false => |it: String| it,
             };
 
-            let apply_needle = |acc: Option<String>, needle: &String| -> Option<String> {
+            let apply_needle = |acc: Option<String>, needle: String| -> Option<String> {
                 acc.and_then(|acc| {
-                    let prep_needle = prepare(needle.to_string());
-                    acc.find(&prep_needle)
-                        .and_then(|idx| Some(acc[idx + prep_needle.len()..].to_string()))
+                    acc.find(&needle)
+                        .and_then(|idx| Some(acc[idx + needle.len()..].to_string()))
                 })
             };
 
             let check_needles = |line: &&String| -> bool {
                 needles
                     .iter()
+                    .map(|it| prepare(it.to_string()))
                     .fold(Some(prepare(line.to_string())), apply_needle)
                     .is_some()
             };
