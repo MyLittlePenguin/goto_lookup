@@ -2,12 +2,35 @@ let home = Sys.getenv "HOME"
 let got_to_file = home ^ "/.got_to"
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
 
-type query = 
-  | Single of { ignore_case: bool; needle: string }
-  | Multi of { ignore_case: bool; needles: string list }
+type query =
+  | Single of { ignore_case : bool; needle : string }
+  | Multi of { ignore_case : bool; needles : string list }
 
 type multi_needle_query = { ignore_case : bool; needles : string list }
 type single_needle_query = { ignore_case : bool; needle : string }
+
+let index_of needle line =
+  let rec aux tl =
+    match tl with
+    | _ when needle = "" -> Some 0
+    | "" -> None
+    | tl when String.starts_with ~prefix:needle tl ->
+        Some (String.length line - String.length tl)
+    | tl -> String.sub tl 1 (String.length tl - 1) |> aux
+  in
+  aux line
+
+let substr_after needle line =
+  let length = String.length line in
+  let needle_length = String.length needle in
+  match index_of needle line with
+  | None -> ""
+  | Some idx ->
+      let start = idx + needle_length in
+      String.sub line start (length - start)
+
+let contains needle line =
+  match index_of needle line with Some _ -> true | None -> false
 
 let rec find_with fn = function
   | [] -> None
@@ -20,13 +43,9 @@ let find_perfect prepare needle list =
 
 let find_end prepare needle list =
   let prepared_needle = prepare needle in
-  find_with (fun it -> String.ends_with ~suffix:prepared_needle (prepare it)) list
-
-let rec contains needle line =
-  match line with
-  | line when line = "" -> false
-  | line when String.starts_with ~prefix:needle line -> true
-  | line -> String.length line - 1 |> String.sub line 1 |> contains needle
+  find_with
+    (fun it -> String.ends_with ~suffix:prepared_needle (prepare it))
+    list
 
 let find_dir needle =
   let cwd = Sys.getcwd () in
@@ -72,16 +91,15 @@ let find_dir needle =
       Some abs_needle
   | false, _ -> None
 
+let get_preparator = function
+  | false -> fun str -> str
+  | true -> fun str -> String.lowercase_ascii str
+
 let find (query : single_needle_query) (list : string list) =
-  let prepare str =
-    if query.ignore_case then String.lowercase_ascii str else str
-  in
+  let prepare = get_preparator query.ignore_case in
   let otherwise fn = function None -> fn list | Some v -> Some v in
-  let contains list =
-    match query with
-    | { needle; ignore_case = false } -> contains needle list
-    | { needle; ignore_case = true } -> contains (prepare needle) (prepare list)
-  in
+  let prepared_needle = prepare query.needle in
+  let contains line = contains prepared_needle (prepare line) in
   let find_some list = find_with contains list in
   if query.needle = "" then exit 400
   else
@@ -90,27 +108,11 @@ let find (query : single_needle_query) (list : string list) =
     |> otherwise (find_end prepare query.needle)
     |> otherwise find_some
 
-let substr_after needle line =
-  let length = String.length line in
-  let needle_length = String.length needle in
-  let rec aux length = function
-    | "" -> ""
-    | line when String.starts_with ~prefix:needle line ->
-        String.sub line needle_length (length - needle_length)
-    | line ->
-        let length = length - 1 in
-        aux length @@ String.sub line 1 length
-  in
-  aux length line
-
-let filter (query: multi_needle_query) list =
-  let prep str =
-    if query.ignore_case then String.lowercase_ascii str else str
-  in
+let filter (query : multi_needle_query) list =
+  let prep = get_preparator query.ignore_case in
   let needles = List.map prep query.needles in
   let rec search_needles line = function
     | [] -> true
-    (* | [ "" ] when line <> "" -> false *)
     | [ needle ] when contains needle line -> true
     | needle :: other_needles -> (
         match substr_after needle line with

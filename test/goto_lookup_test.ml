@@ -13,10 +13,22 @@ let assert_equals (fn : 'a -> string) a b =
 
 let () =
   Goto_lookup.(
+    let test =
+      assert_equals (function
+        | Some x -> "Some " ^ string_of_int x
+        | None -> "None")
+    in
+    test (index_of "oc" "ocaml") (Some 0);
+    test (index_of "ml" "ocaml") (Some 3);
     let test = assert_equals id in
     test (substr_after "c" "ocaml") "aml";
     test (substr_after "ca" "ocaml") "ml";
     test (substr_after "z" "ocaml") "";
+    let test = assert_equals (function true -> "true" | false -> "false") in
+    test (contains "ca" "ocaml") true;
+    test (contains "z" "ocaml") false;
+    test (contains "o" "ocaml") true;
+    test (contains "l" "ocaml") true;
     let test = assert_equals los_to_string in
     test
       (filter
@@ -57,5 +69,4 @@ let () =
       (filter
          { ignore_case = true; needles = [ "software" ] }
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
-      [ "Software/ocaml" ];
-    )
+      [ "Software/ocaml" ])
