@@ -32,41 +32,41 @@ let () =
     let test = assert_equals los_to_string in
     test
       (filter
-         { ignore_case = false; needles = [ "oc" ] }
+         (Multi { ignore_case = false; needles = [ "oc" ] })
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "workspace/ocaml/bingo"; "Software/ocaml" ];
     test
       (filter
-         { ignore_case = false; needles = [ "ocaml" ] }
+         (Multi { ignore_case = false; needles = [ "ocaml" ] })
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "workspace/ocaml/bingo"; "Software/ocaml" ];
     test
       (filter
-         { ignore_case = false; needles = [ "oc"; "bi" ] }
+         (Multi { ignore_case = false; needles = [ "oc"; "bi" ] })
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "workspace/ocaml/bingo" ];
     test
       (filter
-         { ignore_case = false; needles = [ "oc"; "bu" ] }
+         (Multi { ignore_case = false; needles = [ "oc"; "bu" ] })
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [];
     test
       (filter
-         { ignore_case = false; needles = [] }
+         (Multi { ignore_case = false; needles = [] })
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ];
     test
       (filter
-         { ignore_case = false; needles = [] }
+         (Multi { ignore_case = false; needles = [] })
          [ ""; "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ ""; "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ];
     test
       (filter
-         { ignore_case = false; needles = [ "software" ] }
+         (Multi { ignore_case = false; needles = [ "software" ] })
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [];
     test
       (filter
-         { ignore_case = true; needles = [ "software" ] }
+         (Multi { ignore_case = true; needles = [ "software" ] })
          [ "asdf/qwerty"; "workspace/ocaml/bingo"; "Software/ocaml" ])
       [ "Software/ocaml" ])

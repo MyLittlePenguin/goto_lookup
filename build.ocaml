@@ -15,7 +15,7 @@ let rec run = function
 
   | "run" ->
     run "create_version";
-    cmd "dune exec ./bin/main.exe"
+    cmd "dune exec -- goto_lookup --list"
 
   | "version" ->
     cmd "cat version.txt"
@@ -26,7 +26,8 @@ let rec run = function
     cmd "dune install"
 
   | "test" ->
-    cmd "dune test"
+    cmd "dune test";
+    echo "Tests successful"
 
   | "create_version" ->
     write "bin/version.ml" @@ String.concat "" [

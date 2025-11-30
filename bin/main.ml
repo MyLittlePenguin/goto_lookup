@@ -28,17 +28,21 @@ let speclist =
 let parse_arg needle = needles := needle :: !needles
 
 let lookup_filter () =
-  filter { ignore_case = !ignore_case; needles = !needles } lines
+  filter (Multi { ignore_case = !ignore_case; needles = !needles }) lines
 
 let lookup () =
   (* !needles |> Stringify.los_to_string |> print_endline; *)
   match !needles with
   | [] -> [ "" ]
   | [ needle ] -> (
-      match find { ignore_case = !ignore_case; needle } lines with
+      let query = Single { ignore_case = !ignore_case; needle } in
+      find_dir needle |> otherwise (find query) lines |> function
+      | None -> []
+      | Some line -> [ line ])
+  | needles -> (
+      match find (Multi { ignore_case = !ignore_case; needles }) lines with
       | None -> []
       | Some p -> [ p ])
-  | _ -> lookup_filter ()
 
 let lookup_handler handler results =
   match results with [] -> exit Errors.not_found | paths -> handler paths

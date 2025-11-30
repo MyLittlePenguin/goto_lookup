@@ -6,9 +6,6 @@ type query =
   | Single of { ignore_case : bool; needle : string }
   | Multi of { ignore_case : bool; needles : string list }
 
-type multi_needle_query = { ignore_case : bool; needles : string list }
-type single_needle_query = { ignore_case : bool; needle : string }
-
 let index_of needle line =
   let rec aux tl =
     match tl with
@@ -95,29 +92,45 @@ let get_preparator = function
   | false -> fun str -> str
   | true -> fun str -> String.lowercase_ascii str
 
-let find (query : single_needle_query) (list : string list) =
-  let prepare = get_preparator query.ignore_case in
-  let otherwise fn = function None -> fn list | Some v -> Some v in
-  let prepared_needle = prepare query.needle in
-  let contains line = contains prepared_needle (prepare line) in
-  let find_some list = find_with contains list in
-  if query.needle = "" then exit 400
-  else
-    find_dir query.needle
-    |> otherwise (find_perfect prepare query.needle)
-    |> otherwise (find_end prepare query.needle)
-    |> otherwise find_some
+let filter (query : query) list =
+  match query with
+  | Single { ignore_case; needle } -> (
+      let prep = get_preparator ignore_case in
+      let needle = prep needle in
+      match needle with
+      | "" -> list
+      | needle -> List.filter (fun it -> prep it |> contains needle) list)
+  | Multi { ignore_case; needles } ->
+      let prep = get_preparator ignore_case in
+      let needles = List.map prep needles in
+      let rec search_needles line = function
+        | [] -> true
+        | [ needle ] when contains needle line -> true
+        | needle :: other_needles -> (
+            match substr_after needle line with
+            | "" -> false
+            | remainder -> search_needles remainder other_needles)
+      in
+      let has_needles line = search_needles (prep line) needles in
+      List.filter has_needles list
 
-let filter (query : multi_needle_query) list =
-  let prep = get_preparator query.ignore_case in
-  let needles = List.map prep query.needles in
-  let rec search_needles line = function
-    | [] -> true
-    | [ needle ] when contains needle line -> true
-    | needle :: other_needles -> (
-        match substr_after needle line with
-        | "" -> false
-        | remainder -> search_needles remainder other_needles)
-  in
-  let has_needles line = search_needles (prep line) needles in
-  List.filter has_needles list
+let otherwise fn list = function None -> fn list | Some v -> Some v
+
+let rec find (query : query) (list : string list) =
+  match query with
+  | Single { ignore_case; needle } ->
+      let prepare = get_preparator ignore_case in
+      let prepared_needle = prepare needle in
+      let contains line = contains prepared_needle (prepare line) in
+      let find_some list = find_with contains list in
+      if needle = "" then exit 400
+      else
+        None
+        |> otherwise (find_perfect prepare needle) list
+        |> otherwise (find_end prepare needle) list
+        |> otherwise find_some list
+  | Multi { ignore_case; needles } as origin ->
+      find
+        (Single
+           { ignore_case; needle = List.fold_left (fun _ it -> it) "" needles })
+        (filter origin list)
