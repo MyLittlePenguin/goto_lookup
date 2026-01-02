@@ -6,27 +6,27 @@ let specs =
   [
     ( "-i",
       "--ignore-case",
-      (fun (action, _, needles) -> action, true, needles),
+      (fun (action, _, needles) -> (action, true, needles)),
       "ignore case for finding the matches in the known locations" );
     ( "-I",
       "--no-ignore-case",
-      (fun (action, _, needles) -> action, false, needles),
+      (fun (action, _, needles) -> (action, false, needles)),
       "do not ignore case for finding the matches in the known locations" );
     ( "-l",
       "--list",
-      (fun (_, ignore_case, needles) -> List, ignore_case, needles),
+      (fun (_, ignore_case, needles) -> (List, ignore_case, needles)),
       "list all matching locations" );
     ( "-v",
       "--version",
-      (fun (_, ignore_case, needles) -> Print_Version, ignore_case, needles),
+      (fun (_, ignore_case, needles) -> (Print_Version, ignore_case, needles)),
       "print version information" );
     ( "-h",
       "--help",
-      (fun (_, ignore_case, needles) -> Print_Help, ignore_case, needles),
+      (fun (_, ignore_case, needles) -> (Print_Help, ignore_case, needles)),
       "print help information" );
     ( "",
       "--clean",
-      (fun (_, ignore_case, needles) -> Clean, ignore_case, needles),
+      (fun (_, ignore_case, needles) -> (Clean, ignore_case, needles)),
       "remove orphaned entries from the list of known locations" );
   ]
 
