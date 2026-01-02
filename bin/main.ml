@@ -81,8 +81,14 @@ let () =
   | Print_Version -> Printf.printf "goto_lookup %s\n" Version.number
   | Print_Help -> print_help ()
   | Lookup -> (
-      match find query lines with
+    let result = match query with
+      | Single { ignore_case = _; needle } ->
+          find_dir needle |> otherwise (find query) lines
+      | _ -> find query lines
+    in
+    match result with
       | None -> exit Errors.not_found
-      | Some line -> print_endline line)
+      | Some line -> print_endline line
+      )
   | List -> filter query lines |> List.iter print_endline
   | Clean -> remove_dead_paths ()

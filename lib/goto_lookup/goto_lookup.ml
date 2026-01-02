@@ -118,16 +118,17 @@ let otherwise fn list = function None -> fn list | Some v -> Some v
 
 let rec find (query : query) (list : string list) =
   match query with
-  | Single { ignore_case; needle = "" } -> Some ""
+  | Single { ignore_case = _; needle = "" } -> Some ""
   | Single { ignore_case; needle } ->
       let prepare = get_preparator ignore_case in
       let prepared_needle = prepare needle in
       let contains line = contains prepared_needle (prepare line) in
       let find_some list = find_with contains list in
-        None
-        |> otherwise (find_perfect prepare needle) list
-        |> otherwise (find_end prepare needle) list
-        |> otherwise find_some list
+      None
+      (* find_dir needle *)
+      |> otherwise (find_perfect prepare needle) list
+      |> otherwise (find_end prepare needle) list
+      |> otherwise find_some list
   | Multi { ignore_case; needles } as origin ->
       find
         (Single
