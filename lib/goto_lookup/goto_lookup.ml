@@ -124,8 +124,6 @@ let rec find (query : query) (list : string list) =
       let prepared_needle = prepare needle in
       let contains line = contains prepared_needle (prepare line) in
       let find_some list = find_with contains list in
-      (* if needle = "" then exit 400 *)
-      (* else *)
         None
         |> otherwise (find_perfect prepare needle) list
         |> otherwise (find_end prepare needle) list
