@@ -1,51 +1,72 @@
 open Goto_lookup
 
-type action_type = Print_Version | Lookup | List | Clean
+type action_type = Print_Version | Print_Help | Lookup | List | Clean
 
-let ignore_case = ref false
-let needles = ref []
-let action = ref Lookup
-let set_action a = fun () -> action := a
-
-let speclist =
+let specs =
   [
-    ("-i", Arg.Set ignore_case, "Ignore case of needles and known entries");
+    ( "-i",
+      "--ignore-case",
+      (fun (action, _, needles) -> (action, true, needles)),
+      "ignore case for finding the matches in the known locations" );
     ( "-I",
-      Arg.Unit (fun () -> ignore_case := false),
-      "Don't ignore case of needles and known entries" );
-    ("-l", Arg.Unit (set_action List), "Same as --list.");
-    ("-v", Arg.Unit (set_action Print_Version), "Same as --version.");
-    ( "--clean",
-      Arg.Unit (set_action Clean),
-      "Remove paths from the list of known locations that ceased to exist." );
-    ( "--list",
-      Arg.Unit (set_action List),
-      "Lists all matches after applying filter. If no filter was applied all \
-       the known locations are listed." );
-    ("--version", Arg.Unit (set_action Print_Version), "Print version number");
+      "--no-ignore-case",
+      (fun (action, _, needles) -> (action, false, needles)),
+      "do not ignore case for finding the matches in the known locations" );
+    ( "-l",
+      "--list",
+      (fun (_, ignore_case, needles) -> (List, ignore_case, needles)),
+      "list all matching locations" );
+    ( "-v",
+      "--version",
+      (fun (_, ignore_case, needles) -> (Print_Version, ignore_case, needles)),
+      "print version information" );
+    ( "-h",
+      "--help",
+      (fun (_, ignore_case, needles) -> (Print_Help, ignore_case, needles)),
+      "print help information" );
+    ( "",
+      "--clean",
+      (fun (_, ignore_case, needles) -> (Clean, ignore_case, needles)),
+      "remove orphaned entries from the list of known locations" );
   ]
 
-let parse_arg needle = needles := needle :: !needles
+let parse_args args =
+  let state = (Lookup, false, []) in
+  let len = Array.length args in
+  let args = Array.sub args 1 (len - 1) in
+  let parsed_args =
+    Array.fold_left
+      (fun acc it ->
+        match
+          List.find_opt
+            (fun (short, long, _, _) ->
+              let short = String.trim short in
+              let long = String.trim long in
+              (short <> "" && short = it) || (long <> "" && long = it))
+            specs
+        with
+        | Some (_, _, action, _) -> action acc
+        | None ->
+            let action, ignore_case, needles = acc in
+            (action, ignore_case, it :: needles))
+      state args
+  in
+  let action, ignore_case, needles = parsed_args in
+  match needles with
+  | [] -> (action, Single { ignore_case; needle = "" })
+  | [ a ] -> (action, Single { ignore_case; needle = a })
+  | _ -> (action, Multi { ignore_case; needles = List.rev needles })
 
-let lookup_filter () =
-  filter (Multi { ignore_case = !ignore_case; needles = !needles }) lines
-
-let lookup () =
-  (* !needles |> Stringify.los_to_string |> print_endline; *)
-  match !needles with
-  | [] -> [ "" ]
-  | [ needle ] -> (
-      let query = Single { ignore_case = !ignore_case; needle } in
-      find_dir needle |> otherwise (find query) lines |> function
-      | None -> []
-      | Some line -> [ line ])
-  | needles -> (
-      match find (Multi { ignore_case = !ignore_case; needles }) lines with
-      | None -> []
-      | Some p -> [ p ])
-
-let lookup_handler handler results =
-  match results with [] -> exit Errors.not_found | paths -> handler paths
+let print_help () =
+  print_endline "Usage: goto_lookup [options] [query]";
+  print_endline "";
+  print_endline "Options";
+  List.iter
+    (fun (short, long, _, desc) ->
+      if "" = String.trim short then
+        Printf.printf "        %-20s %s\n" long desc
+      else Printf.printf "    %s, %-20s %s\n" short long desc)
+    specs
 
 let remove_dead_paths () =
   lines
@@ -55,11 +76,13 @@ let remove_dead_paths () =
   |> Out_channel.(output_string @@ open_text got_to_file)
 
 let () =
-  Arg.parse speclist parse_arg "usage: goto_lookup <search>";
-  needles := List.rev !needles;
-  match !action with
+  let action, query = parse_args Sys.argv in
+  match action with
   | Print_Version -> Printf.printf "goto_lookup %s\n" Version.number
-  | Lookup ->
-      lookup () |> lookup_handler (fun paths -> List.hd paths |> print_endline)
-  | List -> lookup_filter () |> lookup_handler (List.iter print_endline)
+  | Print_Help -> print_help ()
+  | Lookup -> (
+      match find query lines with
+      | None -> exit Errors.not_found
+      | Some line -> print_endline line)
+  | List -> filter query lines |> List.iter print_endline
   | Clean -> remove_dead_paths ()
