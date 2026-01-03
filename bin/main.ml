@@ -82,6 +82,7 @@ let () =
   | Print_Help -> print_help ()
   | Lookup -> (
     let result = match query with
+      | Single { ignore_case = _; needle = "" } -> Some ""
       | Single { ignore_case = _; needle } ->
           find_dir needle |> otherwise (find query) lines
       | _ -> find query lines
