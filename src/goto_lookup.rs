@@ -99,14 +99,15 @@ pub fn filter(query: Query, lines: &[String]) -> Vec<String> {
             if needle.len() == 0 {
                 return lines.to_vec();
             }
+            let prepare = match ignore_case {
+                true => |it: String| it.to_lowercase(),
+                false => |it: String| it,
+            };
+            let needle = prepare(needle);
             lines
                 .iter()
                 .filter(|it| {
-                    if ignore_case {
-                        it.to_lowercase().contains(&needle.to_lowercase())
-                    } else {
-                        it.contains(&needle)
-                    }
+                    prepare(it.to_string()).contains(&needle)
                 })
                 .cloned()
                 .collect()
