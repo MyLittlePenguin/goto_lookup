@@ -29,6 +29,9 @@ let rec run = function
     cmd "dune test";
     echo "Tests successful"
 
+  | "help" ->
+    cmd "dune exec -- goto_lookup --help"
+
   | "create_version" ->
     write "bin/version.ml" @@ String.concat "" [
       "let number = \"";

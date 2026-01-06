@@ -1,6 +1,12 @@
 open Goto_lookup
 
-type action_type = Print_Version | Print_Help | Lookup | List | Clean
+type action_type =
+  | Print_Version
+  | Print_Help
+  | Lookup
+  | List
+  | Clean
+  | Print_Orphaned
 
 let specs =
   [
@@ -28,6 +34,10 @@ let specs =
       "--clean",
       (fun (_, ignore_case, needles) -> (Clean, ignore_case, needles)),
       "remove orphaned entries from the list of known locations" );
+    ( "",
+      "--show-orphaned",
+      (fun (_, ignore_case, needles) -> (Print_Orphaned, ignore_case, needles)),
+      "show orphaned entries from the list of known locations" );
   ]
 
 let parse_args args =
@@ -75,21 +85,27 @@ let remove_dead_paths () =
   |> String.concat "\n"
   |> Out_channel.(output_string @@ open_text got_to_file)
 
+let print_orphaned () =
+  lines
+  |> List.filter (fun it -> not (Sys.file_exists it && Sys.is_directory it))
+  |> List.iter print_endline
+
 let () =
   let action, query = parse_args Sys.argv in
   match action with
   | Print_Version -> Printf.printf "goto_lookup %s\n" Version.number
   | Print_Help -> print_help ()
   | Lookup -> (
-    let result = match query with
-      | Single { ignore_case = _; needle = "" } -> Some ""
-      | Single { ignore_case = _; needle } ->
-          find_dir needle |> otherwise (find query) lines
-      | _ -> find query lines
-    in
-    match result with
+      let result =
+        match query with
+        | Single { ignore_case = _; needle = "" } -> Some ""
+        | Single { ignore_case = _; needle } ->
+            find_dir needle |> otherwise (find query) lines
+        | _ -> find query lines
+      in
+      match result with
       | None -> exit Errors.not_found
-      | Some line -> print_endline line
-      )
+      | Some line -> print_endline line)
   | List -> filter query lines |> List.iter print_endline
   | Clean -> remove_dead_paths ()
+  | Print_Orphaned -> print_orphaned ()
