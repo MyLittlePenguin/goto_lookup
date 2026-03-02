@@ -1,6 +1,11 @@
+(* let () = print_endline "hallo heinrich" *)
+
 let home = Sys.getenv "HOME"
+(* let () = print_endline "gans" *)
 let got_to_file = home ^ "/.got_to"
+(* let () = print_endline "fuchs" *)
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
+(* let () = print_endline "schildkröte" *)
 
 type query =
   | Single of { ignore_case : bool; needle : string }
