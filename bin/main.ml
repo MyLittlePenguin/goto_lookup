@@ -6,6 +6,8 @@ type action_type =
   | Lookup
   | List
   | Clean
+  | Remove_List
+  | Remove_Single
   | Print_Orphaned
 
 let specs =
@@ -20,7 +22,10 @@ let specs =
       "do not ignore case for finding the matches in the known locations" );
     ( "-l",
       "--list",
-      (fun (_, ignore_case, needles) -> (List, ignore_case, needles)),
+      (fun (action, ignore_case, needles) -> match action with
+      | Remove_Single | Remove_List -> (Remove_List, ignore_case, needles)
+      | _ -> (List, ignore_case, needles)
+      ),
       "list all matching locations" );
     ( "-v",
       "--version",
@@ -38,6 +43,13 @@ let specs =
       "--show-orphaned",
       (fun (_, ignore_case, needles) -> (Print_Orphaned, ignore_case, needles)),
       "show orphaned entries from the list of known locations" );
+    ( "-d",
+      "--delete",
+      (fun (action, ignore_case, needles) -> match action with
+      | List -> (Remove_List, ignore_case, needles)
+      | _ -> (Remove_Single, ignore_case, needles)
+      ),
+      "delete entries found by the query" );
   ]
 
 let parse_args args =
@@ -90,6 +102,13 @@ let print_orphaned () =
   |> List.filter (fun it -> not (Sys.file_exists it && Sys.is_directory it))
   |> List.iter print_endline
 
+let remove_path paths =
+  lines
+  |> List.filter (fun it -> List.exists (( = ) it) paths |> not)
+  |> String.concat "\n"
+  |> Out_channel.(output_string @@ open_text got_to_file)
+
+
 let () =
   let action, query = parse_args Sys.argv in
   match action with
@@ -109,3 +128,17 @@ let () =
   | List -> filter query lines |> List.iter print_endline
   | Clean -> remove_dead_paths ()
   | Print_Orphaned -> print_orphaned ()
+  | Remove_Single -> (
+    match query with
+    | Single { ignore_case = _; needle = "" } -> print_endline "Query must not be empty for deletion"
+    | _ -> find query lines 
+    |> Option.map (fun it -> [it]) 
+    |> function
+      | Some it -> remove_path it
+      | None -> ()
+  )
+  | Remove_List -> (
+    match query with
+    | Single { ignore_case = _; needle = "" } -> print_endline "Query must not be empty for deletion"
+    | _ -> filter query lines |> remove_path
+  )
