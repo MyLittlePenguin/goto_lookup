@@ -1,11 +1,6 @@
-(* let () = print_endline "hallo heinrich" *)
-
 let home = Sys.getenv "HOME"
-(* let () = print_endline "gans" *)
 let got_to_file = home ^ "/.got_to"
-(* let () = print_endline "fuchs" *)
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
-(* let () = print_endline "schildkröte" *)
 
 type query =
   | Single of { ignore_case : bool; needle : string }
@@ -64,9 +59,9 @@ let find_dir needle =
     | ".." -> parent
     | "." -> cwd
     | x when String.starts_with ~prefix:"../" x ->
-        parent ^ String.sub x 2 @@ (String.length x - 2)
+        parent ^ String.sub x 2 (String.length x - 2)
     | x when String.starts_with ~prefix:"./" x ->
-        cwd ^ String.sub x 1 @@ (String.length x - 1)
+        cwd ^ String.sub x 1 (String.length x - 1)
     | x when Filename.is_relative x -> cwd ^ "/" ^ x
     | x -> x
   in

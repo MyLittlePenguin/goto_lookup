@@ -117,8 +117,8 @@ let () =
   | Lookup -> (
       let result =
         match query with
-        | Single { ignore_case = _; needle = "" } -> Some ""
-        | Single { ignore_case = _; needle } ->
+        | Single { needle = ""; _ } -> Some ""
+        | Single { needle; _ } ->
             find_dir needle |> otherwise (find query) lines
         | _ -> find query lines
       in
@@ -130,7 +130,7 @@ let () =
   | Print_Orphaned -> print_orphaned ()
   | Remove_Single -> (
     match query with
-    | Single { ignore_case = _; needle = "" } -> print_endline "Query must not be empty for deletion"
+    | Single { needle = ""; _ } -> print_endline "Query must not be empty for deletion"
     | _ -> find query lines 
     |> Option.map (fun it -> [it]) 
     |> function
@@ -139,6 +139,6 @@ let () =
   )
   | Remove_List -> (
     match query with
-    | Single { ignore_case = _; needle = "" } -> print_endline "Query must not be empty for deletion"
+    | Single { needle = ""; _ } -> print_endline "Query must not be empty for deletion"
     | _ -> filter query lines |> remove_path
   )
