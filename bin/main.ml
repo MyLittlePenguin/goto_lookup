@@ -1,5 +1,9 @@
 open Goto_lookup
 
+let home = Sys.getenv "HOME"
+let got_to_file = home ^ "/.got_to"
+let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
+
 type action_type =
   | Print_Version
   | Print_Help
@@ -22,10 +26,10 @@ let specs =
       "do not ignore case for finding the matches in the known locations" );
     ( "-l",
       "--list",
-      (fun (action, ignore_case, needles) -> match action with
-      | Remove_Single | Remove_List -> (Remove_List, ignore_case, needles)
-      | _ -> (List, ignore_case, needles)
-      ),
+      (fun (action, ignore_case, needles) ->
+        match action with
+        | Remove_Single | Remove_List -> (Remove_List, ignore_case, needles)
+        | _ -> (List, ignore_case, needles)),
       "list all matching locations" );
     ( "-v",
       "--version",
@@ -45,10 +49,10 @@ let specs =
       "show orphaned entries from the list of known locations" );
     ( "-d",
       "--delete",
-      (fun (action, ignore_case, needles) -> match action with
-      | List -> (Remove_List, ignore_case, needles)
-      | _ -> (Remove_Single, ignore_case, needles)
-      ),
+      (fun (action, ignore_case, needles) ->
+        match action with
+        | List -> (Remove_List, ignore_case, needles)
+        | _ -> (Remove_Single, ignore_case, needles)),
       "delete entries found by the query" );
   ]
 
@@ -108,6 +112,18 @@ let remove_path paths =
   |> String.concat "\n"
   |> Out_channel.(output_string @@ open_text got_to_file)
 
+let add_dir list path =
+  path :: list |> List.sort String.compare |> String.concat "\n"
+  |> Out_channel.(output_string @@ open_text got_to_file)
+
+let add_dir_if_neccessary = function
+  | Some dir -> (
+      match List.find_index (( = ) dir) lines with
+      | Some _ -> Some dir
+      | None ->
+          add_dir lines dir;
+          Some dir)
+  | None -> None
 
 let () =
   let action, query = parse_args Sys.argv in
@@ -119,7 +135,8 @@ let () =
         match query with
         | Single { needle = ""; _ } -> Some ""
         | Single { needle; _ } ->
-            find_dir needle |> otherwise (find query) lines
+            find_dir needle |> add_dir_if_neccessary
+            |> otherwise (find query) lines
         | _ -> find query lines
       in
       match result with
@@ -129,16 +146,15 @@ let () =
   | Clean -> remove_dead_paths ()
   | Print_Orphaned -> print_orphaned ()
   | Remove_Single -> (
-    match query with
-    | Single { needle = ""; _ } -> print_endline "Query must not be empty for deletion"
-    | _ -> find query lines 
-    |> Option.map (fun it -> [it]) 
-    |> function
-      | Some it -> remove_path it
-      | None -> ()
-  )
+      match query with
+      | Single { needle = ""; _ } ->
+          print_endline "Query must not be empty for deletion"
+      | _ -> (
+          find query lines |> Option.map (fun it -> [ it ]) |> function
+          | Some it -> remove_path it
+          | None -> ()))
   | Remove_List -> (
-    match query with
-    | Single { needle = ""; _ } -> print_endline "Query must not be empty for deletion"
-    | _ -> filter query lines |> remove_path
-  )
+      match query with
+      | Single { needle = ""; _ } ->
+          print_endline "Query must not be empty for deletion"
+      | _ -> filter query lines |> remove_path)

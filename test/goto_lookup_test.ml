@@ -24,6 +24,12 @@ let () =
     test (substr_after "c" "ocaml") "aml";
     test (substr_after "ca" "ocaml") "ml";
     test (substr_after "z" "ocaml") "";
+    test (relativ_to_abs "a/b/../b") "a/b";
+    test (relativ_to_abs "/a/b/../b") "/a/b";
+    test (relativ_to_abs "a/b/./c") "a/b/c";
+    test (relativ_to_abs "../b/./c") "b/c";
+    test (relativ_to_abs "./b/./c") "b/c";
+    test (relativ_to_abs "a/b/c/..") "a/b";
     let test = assert_equals (function true -> "true" | false -> "false") in
     test (contains "ca" "ocaml") true;
     test (contains "z" "ocaml") false;

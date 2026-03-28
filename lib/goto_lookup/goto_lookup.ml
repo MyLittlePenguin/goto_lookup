@@ -1,7 +1,3 @@
-let home = Sys.getenv "HOME"
-let got_to_file = home ^ "/.got_to"
-let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
-
 type query =
   | Single of { ignore_case : bool; needle : string }
   | Multi of { ignore_case : bool; needles : string list }
@@ -29,6 +25,21 @@ let substr_after needle line =
 let contains needle line =
   match index_of needle line with Some _ -> true | None -> false
 
+let relativ_to_abs ?(path_separator = '/') path =
+  let handle_relative_part acc it =
+    match (acc, it) with
+    | [], "." -> []
+    | [], ".." -> []
+    | acc, "." -> acc
+    | _ :: tl, ".." -> tl
+    | acc, it -> it :: acc
+  in
+  let separator_str = Stringify.char_to_string path_separator in
+  String.split_on_char path_separator path
+  |> List.fold_left handle_relative_part []
+  |> List.rev
+  |> String.concat separator_str
+
 let rec find_with fn = function
   | [] -> None
   | hd :: _ when fn hd -> Some hd
@@ -44,49 +55,30 @@ let find_end prepare needle list =
     (fun it -> String.ends_with ~suffix:prepared_needle (prepare it))
     list
 
-let find_dir needle =
-  let cwd = Sys.getcwd () in
+let find_dir ?(cwd = Sys.getcwd ()) ?(path_separator = '/') needle =
+  let path_separator_str = Stringify.char_to_string path_separator in
   let parent =
-    (* find last path element and substract its length (+ 1 for /) from the total path *)
-    String.fold_left
-      (fun acc it -> if it = '/' then "" else acc ^ String.make 1 it)
-      "" cwd
-    |> String.length |> ( + ) 1
-    |> ( - ) (String.length cwd)
-    |> String.sub cwd 0
+    relativ_to_abs ~path_separator @@ cwd ^ path_separator_str ^ ".."
   in
-  let to_abs = function
+  let full_path = function
     | ".." -> parent
     | "." -> cwd
-    | x when String.starts_with ~prefix:"../" x ->
+    | x when String.starts_with ~prefix:(".." ^ path_separator_str) x ->
         parent ^ String.sub x 2 (String.length x - 2)
-    | x when String.starts_with ~prefix:"./" x ->
+    | x when String.starts_with ~prefix:("." ^ path_separator_str) x ->
         cwd ^ String.sub x 1 (String.length x - 1)
-    | x when Filename.is_relative x -> cwd ^ "/" ^ x
+    | x when Filename.is_relative x -> cwd ^ path_separator_str ^ x
     | x -> x
   in
-  let abs_needle = to_abs needle in
+  let abs_needle = needle |> full_path |> relativ_to_abs in
   let abs_needle =
-    if String.ends_with ~suffix:"/" abs_needle then
+    if String.ends_with ~suffix:path_separator_str abs_needle then
       String.sub abs_needle 0 (String.length abs_needle - 1)
     else abs_needle
   in
-  let write it =
-    List.sort String.compare it
-    |> String.concat "\n"
-    |> Out_channel.(output_string @@ open_text got_to_file)
-  in
-  match
-    ( Sys.file_exists abs_needle && Sys.is_directory abs_needle,
-      List.find_index (fun it -> it = abs_needle) lines )
-  with
-  | true, Some _ ->
-      write lines;
-      Some abs_needle
-  | true, None ->
-      write (abs_needle :: lines);
-      Some abs_needle
-  | false, _ -> None
+  if Sys.file_exists abs_needle && Sys.is_directory abs_needle then
+    Some abs_needle
+  else None
 
 let get_preparator = function
   | false -> fun str -> str

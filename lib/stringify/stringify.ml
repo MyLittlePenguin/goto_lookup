@@ -10,3 +10,4 @@ let l_to_string fn list =
 
 let los_to_string list = l_to_string id list
 
+let char_to_string c = String.make 1 c
