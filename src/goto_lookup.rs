@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::path::Path;
 
 pub enum Query {
     Single {
@@ -14,7 +15,7 @@ pub enum Query {
 
 type Preparator = fn(String) -> String;
 
-static GOT_TO_FILE: &str = "/.got_to";
+pub static GOT_TO_FILE: &str = "/.got_to";
 
 pub fn home() -> String {
     match env::home_dir() {
@@ -56,7 +57,46 @@ fn find_some(prepare: Preparator, needle: String, list: &[String]) -> Option<Str
     find_with(|it| prepare(it).contains(&prepared_needle), list)
 }
 
-pub fn find(query: Query, lines: &[String]) -> Vec<String> {
+fn relative_to_abs(path: String, path_separator: &str) -> String {
+    return path
+        .split(path_separator)
+        .fold(&mut Vec::new(), |acc: &mut Vec<String>, it| match it {
+            "." => acc,
+            ".." => {
+                acc.pop();
+                acc
+            }
+            _ => {
+                acc.push(it.to_string());
+                acc
+            }
+        })
+        .join(path_separator)
+        .to_string();
+}
+
+pub fn find_dir(needle: &String, cwd: String, path_separator: &str) -> Option<String> {
+    let parent = cwd.to_string() + path_separator + "..";
+    let full_path = match needle.as_str() {
+        ".." => parent,
+        "." => cwd.to_string(),
+        x if x.starts_with(vec!["..", path_separator].join("").as_str()) => parent + &x[2..],
+        x if x.starts_with(vec![".", path_separator].join("").as_str()) => cwd + &x[1..],
+        x if std::path::Path::new(x).is_relative() => cwd + path_separator + &x.to_string(),
+        x => x.to_string(),
+    };
+    let abs_needle = relative_to_abs(full_path, path_separator);
+    let abs_needle = 
+        abs_needle.strip_suffix(path_separator).unwrap_or(abs_needle.as_str());
+
+    return if Path::new(abs_needle).exists() {
+        Some(abs_needle.to_string())
+    } else {
+        None
+    }
+}
+
+pub fn find(query: Query, lines: &[String]) -> Option<String> {
     match query {
         Query::Single {
             ignore_case,
@@ -69,7 +109,7 @@ pub fn find(query: Query, lines: &[String]) -> Vec<String> {
             find_perfect(prepare, needle.clone(), lines)
                 .or_else(|| find_end(prepare, needle.clone(), lines))
                 .or_else(|| find_some(prepare, needle.clone(), lines))
-                .map_or(vec![], |value| vec![value])
+            // .map_or(vec![], |value| vec![value])
         }
         Query::Multi {
             ignore_case,
