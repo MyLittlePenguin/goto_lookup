@@ -12,7 +12,7 @@ let assert_equals (fn : 'a -> string) a b =
   assert_fn eq a b (a_str ^ " <> " ^ b_str)
 
 let () =
-  Goto_lookup.(
+  Lookup.(
     let test =
       assert_equals (function
         | Some x -> "Some " ^ string_of_int x

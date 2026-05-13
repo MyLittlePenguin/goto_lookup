@@ -1,4 +1,4 @@
-open Goto_lookup
+open Lookup
 
 let home = Sys.getenv "HOME"
 let got_to_file = home ^ "/.got_to"

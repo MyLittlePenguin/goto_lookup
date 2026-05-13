@@ -1,5 +1,5 @@
 (executable
   (public_name lookup)
   (name main)
-  (libraries goto_lookup errors stringify)
+  (libraries lookup errors stringify)
 )
