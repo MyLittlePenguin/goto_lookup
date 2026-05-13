@@ -1,5 +1,6 @@
 #!/usr/bin/env utop
 #require "unix"
+#require "compiler-libs.toplevel"
 
 let arg = if Array.length Sys.argv > 1 then Sys.argv.(1) else ""
 
@@ -24,6 +25,8 @@ let read filename =
   close_in ic;
   content;;
 
-#use "build.ocaml"
+let script = if Sys.file_exists "build.ml" then "build.ml" else "build.ocaml";;
+
+Topdirs.dir_use Format.std_formatter script
 
 let () = run arg |> ignore

@@ -1,5 +1,3 @@
-use std::env;
-use std::fs;
 use std::path::Path;
 
 pub enum Query {
@@ -14,25 +12,6 @@ pub enum Query {
 }
 
 type Preparator = fn(String) -> String;
-
-pub static GOT_TO_FILE: &str = "/.got_to";
-
-pub fn home() -> String {
-    match env::home_dir() {
-        Some(path) => path.to_str().unwrap().to_string(),
-        None => panic!("home directory not found!"),
-    }
-}
-
-pub fn lines() -> Vec<String> {
-    return match fs::read_to_string(home() + GOT_TO_FILE) {
-        Ok(content) => Vec::from_iter(content.split("\n").into_iter().map(|it| it.to_string())),
-        Err(e) => {
-            println!("Could not read {}: {}", GOT_TO_FILE, e);
-            vec![]
-        }
-    };
-}
 
 fn find_with(f: impl Fn(String) -> bool, list: &[String]) -> Option<String> {
     match list.len() {

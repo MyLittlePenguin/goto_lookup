@@ -1,6 +1,6 @@
-use std::{env, fs::File, fs::remove_file, io::Write, path::Path};
+use std::{env, fs, fs::File, fs::remove_file, io::Write, path::Path};
 
-use crate::goto_lookup::{GOT_TO_FILE, Query, filter, find, find_dir, home};
+use crate::goto_lookup::{Query, filter, find, find_dir};
 use std::process;
 
 pub mod goto_lookup;
@@ -11,10 +11,32 @@ enum ActionType {
     Lookup,
     List,
     Clean,
+    RemoveList,
+    RemoveSingle,
+    PrintOrphaned,
 }
 
 fn string(s: &str) -> String {
     s.to_string()
+}
+
+pub static GOT_TO_FILE: &str = "/.got_to";
+
+pub fn home() -> String {
+    match env::home_dir() {
+        Some(path) => path.to_str().unwrap().to_string(),
+        None => panic!("home directory not found!"),
+    }
+}
+
+pub fn lines() -> Vec<String> {
+    return match fs::read_to_string(home() + GOT_TO_FILE) {
+        Ok(content) => Vec::from_iter(content.lines().into_iter().map(|it| it.to_string())),
+        Err(e) => {
+            println!("Could not read {}: {}", GOT_TO_FILE, e);
+            vec![]
+        }
+    };
 }
 
 type ParsedArgState<'a> = (ActionType, bool, &'a mut Vec<String>);
@@ -25,7 +47,7 @@ type ArgSpec<'a, 'b, 'c> = (
     &'c str,
 );
 
-const SPECS: [ArgSpec; 6] = [
+const SPECS: [ArgSpec; 8] = [
     (
         "-i",
         "--ignore-case",
@@ -61,6 +83,21 @@ const SPECS: [ArgSpec; 6] = [
         "--clean",
         |state| (ActionType::Clean, state.1, state.2),
         "remove orphaned entries from the list of known locations",
+    ),
+    (
+        "",
+        "--show-orphaned",
+        |state| (ActionType::PrintOrphaned, state.1, state.2),
+        "show orphaned entries from the list of known locations",
+    ),
+    (
+        "-d",
+        "--delete",
+        |state| match state.0 {
+            ActionType::List => (ActionType::RemoveList, state.1, state.2),
+            _ => (ActionType::RemoveSingle, state.1, state.2),
+        },
+        "delete entries found by the query",
     ),
 ];
 
@@ -129,6 +166,10 @@ fn add_dir(list: &Vec<String>, path: String) -> std::io::Result<()> {
     new_list.sort();
     let new_list_content = new_list.join("\n");
 
+    write_new_lines(&new_list_content)
+}
+
+fn write_new_lines(new_list_content: &String) -> std::io::Result<()> {
     let store_path_str = home() + GOT_TO_FILE;
     let store_path = Path::new(store_path_str.as_str());
     log(format!("store_path: {:?}", store_path).as_str());
@@ -148,12 +189,12 @@ fn add_dir(list: &Vec<String>, path: String) -> std::io::Result<()> {
 fn add_dir_if_neccessary(finding: &Option<String>) -> Option<String> {
     log("call to add_dir_if_neccessary");
     match finding {
-        Some(dir_path) => goto_lookup::lines()
+        Some(dir_path) => lines()
             .iter()
             .find(|&it| it == dir_path)
             .and_then(|it| Some(it.to_string()))
             .or_else(|| {
-                add_dir(&goto_lookup::lines(), dir_path.to_string()).unwrap();
+                add_dir(&lines(), dir_path.to_string()).unwrap();
                 Some(dir_path.to_string())
             }),
         None => None,
@@ -195,18 +236,40 @@ fn handle_lookup(query: Query, lines: &Vec<String>) -> std::io::Result<()> {
     Ok(())
 }
 
+fn print_orphaned() {
+    lines()
+        .iter()
+        .filter(|it| !Path::new(it).is_dir())
+        .for_each(|line| println!("{}", line));
+}
+
+fn remove_dead_paths() -> std::io::Result<()> {
+    write_new_lines(
+        &lines()
+            .into_iter()
+            .filter(|it| Path::new(it).is_dir())
+            .collect::<Vec<_>>()
+            .join("\n"),
+    )
+}
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let (action, query) = parse_args(args);
-    let lines = &goto_lookup::lines();
+    let lines = &lines();
     match action {
-        ActionType::PrintVersion => println!("goto_lookup 0.0.2"),
+        ActionType::PrintVersion => {
+            println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"))
+        }
         ActionType::PrintHelp => print_help(),
         ActionType::Lookup => handle_lookup(query, lines)?,
         ActionType::List => filter(query, lines)
             .iter()
             .for_each(|it| println!("{}", it)),
-        ActionType::Clean => todo!(),
+        ActionType::Clean => remove_dead_paths()?,
+        ActionType::RemoveList => todo!(),
+        ActionType::RemoveSingle => todo!(),
+        ActionType::PrintOrphaned => print_orphaned(),
     }
     Ok(())
 }
