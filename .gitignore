@@ -1,8 +1,8 @@
 bin/version.ml
 _build/
 windows/
-goto_lookup.install
-goto_lookup.opam
+lookup.install
+lookup.opam
 
 # rust
 target
