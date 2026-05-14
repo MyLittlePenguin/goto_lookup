@@ -157,4 +157,4 @@ let () =
       match query with
       | Single { needle = ""; _ } ->
           print_endline "Query must not be empty for deletion"
-        | _ -> filter query lines |> remove_paths)
+      | _ -> filter query lines |> remove_paths)
