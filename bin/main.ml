@@ -106,7 +106,7 @@ let print_orphaned () =
   |> List.filter (fun it -> not (Sys.file_exists it && Sys.is_directory it))
   |> List.iter print_endline
 
-let remove_path paths =
+let remove_paths paths =
   lines
   |> List.filter (fun it -> List.exists (( = ) it) paths |> not)
   |> String.concat "\n"
@@ -151,10 +151,10 @@ let () =
           print_endline "Query must not be empty for deletion"
       | _ -> (
           find query lines |> Option.map (fun it -> [ it ]) |> function
-          | Some it -> remove_path it
+          | Some it -> remove_paths it
           | None -> ()))
   | Remove_List -> (
       match query with
       | Single { needle = ""; _ } ->
           print_endline "Query must not be empty for deletion"
-        | _ -> filter query lines |> remove_path)
+        | _ -> filter query lines |> remove_paths)
