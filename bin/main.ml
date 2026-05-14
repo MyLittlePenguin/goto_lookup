@@ -84,7 +84,7 @@ let parse_args args =
   | _ -> (action, Multi { ignore_case; needles = List.rev needles })
 
 let print_help () =
-  print_endline "Usage: goto_lookup [options] [query]";
+  print_endline "Usage: lookup [options] [query]";
   print_endline "";
   print_endline "Options";
   List.iter
@@ -128,7 +128,7 @@ let add_dir_if_neccessary = function
 let () =
   let action, query = parse_args Sys.argv in
   match action with
-  | Print_Version -> Printf.printf "goto_lookup %s\n" Version.number
+  | Print_Version -> Printf.printf "lookup %s\n" Version.number
   | Print_Help -> print_help ()
   | Lookup -> (
       let result =
@@ -157,4 +157,4 @@ let () =
       match query with
       | Single { needle = ""; _ } ->
           print_endline "Query must not be empty for deletion"
-      | _ -> filter query lines |> remove_path)
+        | _ -> filter query lines |> remove_path)
