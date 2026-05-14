@@ -27,20 +27,25 @@ fn string(s: &str) -> String {
     s.to_string()
 }
 
-pub static GOT_TO_FILE: &str = "/.got_to";
+static GOT_TO_FILE: &str = "/.got_to";
 
-pub fn home() -> String {
+fn home() -> String {
     match env::home_dir() {
         Some(path) => path.to_str().unwrap().to_string(),
-        None => panic!("home directory not found!"),
+        // None => panic!("home directory not found!"),
+        None => ".".to_string()
     }
 }
 
-pub fn lines() -> Vec<String> {
-    return match fs::read_to_string(home() + GOT_TO_FILE) {
+fn get_lookup_home() -> String {
+    std::env::var("LOOKUP_HOME").unwrap_or_else(|_| home())
+}
+
+fn lines() -> Vec<String> {
+    return match fs::read_to_string(get_lookup_home() + GOT_TO_FILE) {
         Ok(content) => Vec::from_iter(content.lines().into_iter().map(|it| it.to_string())),
-        Err(e) => {
-            println!("Could not read {}: {}", GOT_TO_FILE, e);
+        Err(_) => {
+            write_new_lines(&"".to_string()).unwrap();
             vec![]
         }
     };
@@ -182,7 +187,8 @@ fn add_dir(list: &Vec<String>, path: String) -> std::io::Result<()> {
 }
 
 fn write_new_lines(new_list_content: &String) -> std::io::Result<()> {
-    let store_path_str = home() + GOT_TO_FILE;
+    // let store_path_str = home() + GOT_TO_FILE;
+    let store_path_str = get_lookup_home() + GOT_TO_FILE;
     let store_path = Path::new(store_path_str.as_str());
     log(format!("store_path: {:?}", store_path).as_str());
     if store_path.exists() {

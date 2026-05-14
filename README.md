@@ -1,4 +1,4 @@
-# goto_lookup
+# lookup
 
 ## TODO
 
@@ -9,7 +9,9 @@
 - [x] remove or add slashes at the end consequently when adding an entry
 - [x] add flag to list all matches
 - [x] add flag to list known locations
-- [ ] add flag to remove matches from known locations
+- [x] add flag to remove matches from known locations
 - [x] add flag to remove all paths that don't exist anymore
 - [x] add flag to print version
-- [ ] add env variable to change the path of the known location file
+- [x] add env variable to change the path of the known location file
+- [x] if file with known locations doesn't exist yet, it will be created
+
