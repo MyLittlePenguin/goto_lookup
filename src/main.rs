@@ -1,8 +1,15 @@
-use std::{env, fs, fs::File, fs::remove_file, io::Write, path::Path};
-
-use crate::goto_lookup::{Query, filter, find, find_dir};
 use std::process;
+use std::{
+    env,
+    fs::{self, File, remove_file},
+    io::Write,
+    path::Path,
+};
 
+use crate::errors::{Error, handle_error};
+use crate::goto_lookup::{Query, filter, find, find_dir};
+
+pub mod errors;
 pub mod goto_lookup;
 
 enum ActionType {
@@ -63,7 +70,12 @@ const SPECS: [ArgSpec; 8] = [
     (
         "-l",
         "--list",
-        |state| (ActionType::List, state.1, state.2),
+        |state| match state.0 {
+            ActionType::RemoveSingle | ActionType::RemoveList => {
+                (ActionType::RemoveList, state.1, state.2)
+            }
+            _ => (ActionType::List, state.1, state.2),
+        },
         "list all matching locations",
     ),
     (
@@ -141,7 +153,7 @@ fn parse_args(args: Vec<String>) -> (ActionType, Query) {
 }
 
 fn print_help() {
-    println!("Usage: goto_lookup [options] [query]");
+    println!("Usage: {} [options] [query]", env!("CARGO_PKG_NAME"));
     println!();
     println!("Options:");
     for spec in SPECS.iter() {
@@ -253,6 +265,16 @@ fn remove_dead_paths() -> std::io::Result<()> {
     )
 }
 
+fn remove_paths(paths: &Vec<String>) -> std::io::Result<()> {
+    write_new_lines(
+        &lines()
+            .into_iter()
+            .filter(|it| !paths.contains(it))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    )
+}
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let (action, query) = parse_args(args);
@@ -267,8 +289,26 @@ fn main() -> std::io::Result<()> {
             .iter()
             .for_each(|it| println!("{}", it)),
         ActionType::Clean => remove_dead_paths()?,
-        ActionType::RemoveList => todo!(),
-        ActionType::RemoveSingle => todo!(),
+        ActionType::RemoveSingle => match query {
+            Query::Single {
+                ignore_case: _,
+                needle,
+            } if needle == "" => handle_error(Error::EmptyQuery),
+            _ => {
+                let result = find(query, lines).map(|it| [it]);
+                match result {
+                    Some(it) => remove_paths(&it.to_vec())?,
+                    None => (),
+                }
+            }
+        },
+        ActionType::RemoveList => match query {
+            Query::Single {
+                ignore_case: _,
+                needle,
+            } if needle == "" => handle_error(Error::EmptyQuery),
+            _ => remove_paths(&filter(query, lines))?,
+        },
         ActionType::PrintOrphaned => print_orphaned(),
     }
     Ok(())

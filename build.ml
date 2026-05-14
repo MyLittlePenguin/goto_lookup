@@ -6,7 +6,7 @@ let rec run = function
   | "" | "build" | "compile" ->
     cmd "cargo build";
   | "release" -> cmd "cargo build --release";
-  | "install" -> cmd "cargo install";
+  | "install" -> cmd "cargo install --path .";
   | "test" -> cmd "cargo test";
   | "pull" -> cmd "git pull";
   | _ -> exit 404;;
