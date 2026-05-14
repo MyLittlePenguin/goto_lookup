@@ -1,7 +1,15 @@
 open Lookup
 
-let home = Sys.getenv "HOME"
-let got_to_file = home ^ "/.got_to"
+(* let home = Sys.getenv "HOME" *)
+let home = Sys.getenv_opt "HOME"
+
+let lookup_home =
+  (Sys.getenv_opt "LOOKUP_HOME" |> function None -> home | Some v -> Some v)
+  |> function
+  | None -> "."
+  | Some v -> v
+
+let got_to_file = lookup_home ^ "/.got_to"
 let lines = In_channel.input_lines @@ In_channel.open_text got_to_file
 
 type action_type =
