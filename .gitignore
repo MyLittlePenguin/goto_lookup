@@ -2,6 +2,7 @@ _build/
 goto_lookup.install
 goto_lookup.opam
 bin/
+windows/
 
 
 # Added by cargo
