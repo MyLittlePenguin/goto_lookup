@@ -56,23 +56,27 @@ fn relative_to_abs(path: String, path_separator: &str) -> String {
 
 pub fn find_dir(needle: &String, cwd: String, path_separator: &str) -> Option<String> {
     let parent = cwd.to_string() + path_separator + "..";
+    let parent_prefix = format!("..{}", path_separator);
+    let cwd_prefix = format!(".{}", path_separator);
+
     let full_path = match needle.as_str() {
         ".." => parent,
         "." => cwd.to_string(),
-        x if x.starts_with(vec!["..", path_separator].join("").as_str()) => parent + &x[2..],
-        x if x.starts_with(vec![".", path_separator].join("").as_str()) => cwd + &x[1..],
+        x if x.starts_with(&parent_prefix) => parent + &x[2..],
+        x if x.starts_with(&cwd_prefix) => cwd + &x[1..],
         x if std::path::Path::new(x).is_relative() => cwd + path_separator + &x.to_string(),
         x => x.to_string(),
     };
     let abs_needle = relative_to_abs(full_path, path_separator);
-    let abs_needle = 
-        abs_needle.strip_suffix(path_separator).unwrap_or(abs_needle.as_str());
+    let abs_needle = abs_needle
+        .strip_suffix(path_separator)
+        .unwrap_or(abs_needle.as_str());
 
     return if Path::new(abs_needle).exists() {
         Some(abs_needle.to_string())
     } else {
         None
-    }
+    };
 }
 
 pub fn find(query: Query, lines: &[String]) -> Option<String> {
@@ -125,9 +129,7 @@ pub fn filter(query: Query, lines: &[String]) -> Vec<String> {
             let needle = prepare(needle);
             lines
                 .iter()
-                .filter(|it| {
-                    prepare(it.to_string()).contains(&needle)
-                })
+                .filter(|it| prepare(it.to_string()).contains(&needle))
                 .cloned()
                 .collect()
         }

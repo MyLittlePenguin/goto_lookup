@@ -28,12 +28,13 @@ fn string(s: &str) -> String {
 }
 
 static GOT_TO_FILE: &str = "/.got_to";
+static PATH_SEPARATOR: &str = std::path::MAIN_SEPARATOR_STR;
 
 fn home() -> String {
     match env::home_dir() {
         Some(path) => path.to_str().unwrap().to_string(),
         // None => panic!("home directory not found!"),
-        None => ".".to_string()
+        None => ".".to_string(),
     }
 }
 
@@ -187,7 +188,6 @@ fn add_dir(list: &Vec<String>, path: String) -> std::io::Result<()> {
 }
 
 fn write_new_lines(new_list_content: &String) -> std::io::Result<()> {
-    // let store_path_str = home() + GOT_TO_FILE;
     let store_path_str = get_lookup_home() + GOT_TO_FILE;
     let store_path = Path::new(store_path_str.as_str());
     log(format!("store_path: {:?}", store_path).as_str());
@@ -233,7 +233,7 @@ fn handle_lookup(query: Query, lines: &Vec<String>) -> std::io::Result<()> {
             let cwd = env::current_dir()?;
             let cwd = cwd.to_str().unwrap();
             log("find local dir");
-            let finding = find_dir(&needle, cwd.to_string(), "/");
+            let finding = find_dir(&needle, cwd.to_string(), PATH_SEPARATOR);
             add_dir_if_neccessary(&finding).or_else(|| {
                 find(
                     Query::Single {
